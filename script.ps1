@@ -1,20 +1,27 @@
 $icon_url = $args[0]
+$outputPath = $args[1]
 $localPath = (Get-Location).Path
+
+# optional, on MacOS icomoon-cli failed to launch Chrome
 $env:CHROME_PATH = (Get-Process -Name "Google Chrome")[0].Path
 
-Remove-Item .\temp -Recurse -ErrorAction Ignore
-Remove-Item .\outfiles -Recurse -ErrorAction Ignore
-
+# Create temp dir
 New-Item -ItemType Directory -Force -Path .\temp\icons_all
-New-Item -ItemType Directory -Force -Path .\outfiles
 
-Invoke-WebRequest -Uri $icon_url -OutFile ".\temp\onyx_icons.zip"
+# Download zip
+Invoke-WebRequest -Uri $icon_url -OutFile ".\temp\temp.zip"
 
-Expand-Archive .\temp\onyx_icons.zip -DestinationPath .\temp\onyx_icons
+# Extract zip file
+Expand-Archive .\temp\temp.zip -DestinationPath .\temp\temp_icons
 
-Get-ChildItem -Path ".\temp\onyx_icons\icons\*.svg" -Recurse | Move-Item -Destination ".\temp\icons_all" 
+# Collect all svg files into 1 folder
+Get-ChildItem -Path ".\temp\temp_icons\icons\*.svg" -Recurse | Move-Item -Destination ".\temp\icons_all" 
 
+# Get a csv of svg files
 $iconList = (Get-ChildItem -Path '.\temp\icons_all' ).FullName -join ","
 
-icomoon-cli -i $iconList -s $localPath/selection-empty.json -o $localPath/outfiles/
+# Run iconmoon-cli
+icomoon-cli -i $iconList -s $localPath/selection-empty.json -o $outputPath
 
+# cleanup
+Remove-Item .\temp -Recurse -ErrorAction Ignore
